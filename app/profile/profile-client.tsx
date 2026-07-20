@@ -181,16 +181,16 @@ export function ProfileClient() {
         <Tabs defaultValue="orders" className="w-full max-w-5xl mx-auto flex flex-col md:flex-row gap-8">
           
           <div className="md:w-64 shrink-0">
-            <TabsList className="flex flex-col w-full h-auto p-1 bg-stone-50 rounded-2xl border border-stone-200">
-              <TabsTrigger value="profile" className="w-full justify-start gap-3 px-4 py-3 text-sm font-semibold rounded-xl data-[state=active]:bg-white data-[state=active]:text-stone-950 data-[state=active]:shadow-sm transition-all cursor-pointer">
+            <TabsList className="flex flex-row md:flex-col w-full h-auto p-1 bg-stone-50 rounded-2xl border border-stone-200 overflow-x-auto no-scrollbar shrink-0">
+              <TabsTrigger value="profile" className="flex-1 md:flex-none justify-center md:justify-start gap-3 px-4 py-3 text-sm font-semibold rounded-xl data-[state=active]:bg-white data-[state=active]:text-stone-950 data-[state=active]:shadow-sm transition-all cursor-pointer whitespace-nowrap">
                 <User className="w-4 h-4" />
                 My Profile
               </TabsTrigger>
-              <TabsTrigger value="orders" className="w-full justify-start gap-3 px-4 py-3 text-sm font-semibold rounded-xl data-[state=active]:bg-white data-[state=active]:text-stone-950 data-[state=active]:shadow-sm transition-all cursor-pointer">
+              <TabsTrigger value="orders" className="flex-1 md:flex-none justify-center md:justify-start gap-3 px-4 py-3 text-sm font-semibold rounded-xl data-[state=active]:bg-white data-[state=active]:text-stone-950 data-[state=active]:shadow-sm transition-all cursor-pointer whitespace-nowrap">
                 <ClipboardList className="w-4 h-4" />
                 Order History
               </TabsTrigger>
-              <TabsTrigger value="addresses" className="w-full justify-start gap-3 px-4 py-3 text-sm font-semibold rounded-xl data-[state=active]:bg-white data-[state=active]:text-stone-950 data-[state=active]:shadow-sm transition-all cursor-pointer">
+              <TabsTrigger value="addresses" className="flex-1 md:flex-none justify-center md:justify-start gap-3 px-4 py-3 text-sm font-semibold rounded-xl data-[state=active]:bg-white data-[state=active]:text-stone-950 data-[state=active]:shadow-sm transition-all cursor-pointer whitespace-nowrap">
                 <MapPinned className="w-4 h-4" />
                 Saved Addresses
               </TabsTrigger>
@@ -393,7 +393,7 @@ export function ProfileClient() {
                             onChange={(e) => setAddressVillage(e.target.value)}
                             className="w-full h-10 px-3 rounded-xl border border-stone-200 bg-stone-50/50 text-sm text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-900"
                           >
-                            <option value="">Select location in Gadarwara</option>
+                            <option value="">Select location in Chichli</option>
                             {deliveryAreas.map((da) => (
                               <option key={da._id} value={da.village}>
                                 {da.village}

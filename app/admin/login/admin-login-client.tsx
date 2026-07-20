@@ -127,10 +127,7 @@ export function AdminLoginClient() {
           </CardContent>
         </Card>
 
-        {/* Helper Note */}
-        <p className="text-[10px] text-zinc-600 text-center leading-normal max-w-[280px] mx-auto">
-          Developer note: Preseeded credentials are <span className="font-bold text-zinc-500">admin@swagatamcafe.com</span> and password <span className="font-bold text-zinc-500">adminpassword</span>.
-        </p>
+
 
       </div>
     </div>

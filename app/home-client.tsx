@@ -36,14 +36,15 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.15,
+        delayChildren: 0.1,
       },
     },
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1.0] as const } },
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 100, damping: 20, mass: 0.5 } },
   };
 
   return (
@@ -67,10 +68,10 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
         {/* Center Glass Card (Squarespace Aesthetic) */}
         <div className="container mx-auto px-4 md:px-6 z-10 text-center">
           <motion.div 
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-3xl mx-auto bg-white/95 backdrop-blur-md border border-white/30 p-8 sm:p-12 md:p-16 rounded-3xl shadow-2xl shadow-stone-900/10 text-center"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="max-w-3xl mx-auto bg-white/95 backdrop-blur-md border border-white/40 p-6 sm:p-10 md:p-16 rounded-[2rem] shadow-2xl shadow-stone-900/15 text-center"
           >
             <motion.div
               initial={{ opacity: 0, y: 15 }}
@@ -79,7 +80,7 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100/50 border border-amber-200/30 text-amber-900 text-xs font-semibold uppercase tracking-wider mb-6 mx-auto"
             >
               <Coffee className="w-3.5 h-3.5 text-amber-700" />
-              <span>Welcome to Swagatam Cafe Gadarwara</span>
+              <span>Welcome to Swagatam Cafe Chichli</span>
             </motion.div>
 
             <motion.h1
@@ -109,8 +110,8 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Button asChild size="lg" className="rounded-full bg-stone-900 hover:bg-stone-850 text-white font-semibold border-0 h-14 px-8 shadow-md transition-all duration-200 hover:scale-[1.02] cursor-pointer">
-                <Link href="/menu" className="flex items-center gap-2">
+              <Button asChild size="lg" className="rounded-full bg-stone-900 hover:bg-stone-800 text-white font-semibold border-0 h-14 px-8 shadow-lg shadow-stone-900/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer w-full sm:w-auto">
+                <Link href="/menu" className="flex items-center justify-center gap-2">
                   Order Online
                   <ArrowRight className="w-5 h-5" />
                 </Link>
@@ -149,13 +150,13 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
                 <p className="text-base text-stone-800 font-semibold mt-0.5">11:00 AM - 10:00 PM Daily</p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center md:items-start gap-4 justify-center md:justify-start pt-4 md:pt-0 md:px-8">
+            <div className="flex flex-col sm:flex-row items-center md:items-start gap-4 justify-center md:justify-start pt-4 first:pt-0 md:pt-0 md:px-6">
               <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700 shrink-0">
                 <MapPin className="w-6 h-6" />
               </div>
               <div>
                 <p className="text-xs text-stone-400 font-bold uppercase tracking-wider">FIND US AT</p>
-                <p className="text-base text-stone-800 font-semibold mt-0.5">Station Road, Gadarwara</p>
+                <p className="text-base text-stone-800 font-semibold mt-0.5">Station Road, Chichli</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center md:items-start gap-4 justify-center md:justify-start pt-4 md:pt-0 md:px-8">
@@ -198,10 +199,10 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
               <motion.div key={cat.slug} variants={itemVariants}>
                 <Link 
                   href={`/menu?category=${cat.slug}`}
-                  className="group block relative rounded-2xl bg-white border border-stone-200 hover:border-amber-600 p-6 text-center hover:shadow-lg transition-all duration-300 overflow-hidden"
+                  className="group block relative rounded-2xl bg-white border border-stone-100 hover:border-amber-400 p-5 sm:p-6 text-center hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 overflow-hidden"
                 >
-                  <div className="w-14 h-14 mx-auto rounded-full bg-stone-100 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-amber-100 transition-all duration-300">
-                    <Utensils className="w-6 h-6 text-stone-700 group-hover:text-amber-700" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full bg-stone-50 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 group-hover:bg-amber-50 transition-all duration-300">
+                    <Utensils className="w-5 h-5 sm:w-6 sm:h-6 text-stone-600 group-hover:text-amber-600 transition-colors" />
                   </div>
                   <span className="font-semibold text-stone-900 text-sm block group-hover:text-amber-700 transition-colors">
                     {cat.name}
@@ -225,16 +226,16 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
               Chef's Special Best Sellers
             </h2>
             <p className="text-sm text-stone-500 mt-3">
-              The dishes that define us. Handcrafted with love and ordered daily by foodies across Gadarwara.
+              The dishes that define us. Handcrafted with love and ordered daily by foodies across Chichli.
             </p>
           </div>          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {bestSellers.map((product) => (
               <div 
                 key={product._id} 
-                className="group flex flex-col bg-white overflow-hidden transition-all duration-300"
+                className="group flex flex-col bg-white overflow-hidden rounded-2xl hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 p-3 border border-transparent hover:border-stone-100"
               >
                 {/* Image Container - Aspect 4:3 */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-stone-100 rounded-2xl border border-stone-200/40">
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-stone-50 rounded-xl border border-stone-100/50">
                   <Image
                     src={product.image}
                     alt={product.name}
@@ -280,9 +281,9 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
                     
                     <Button 
                       onClick={() => addToCart(product)}
-                      className="rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs px-4 h-8 transition-colors cursor-pointer"
+                      className="rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs px-5 h-9 shadow-md shadow-stone-900/10 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                     >
-                      Add
+                      Add to Cart
                     </Button>
                   </div>
                 </div>
@@ -303,7 +304,7 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
               <div>
                 <h3 className="font-heading text-lg font-bold text-stone-900">Fast Local Delivery</h3>
                 <p className="text-sm text-stone-500 mt-2 leading-relaxed">
-                  Fast delivery across Gadarwara town directly from our kitchen. Hot, fresh, and on time.
+                  Fast delivery across Chichli town directly from our kitchen. Hot, fresh, and on time.
                 </p>
               </div>
             </div>
@@ -344,7 +345,7 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
                 Visit Swagatam Cafe
               </h2>
               <p className="text-stone-600 mb-8 leading-relaxed">
-                Conveniently located on Station Road, right in the heart of Gadarwara. Pop in for a refreshing cold coffee, a cheesy burger, or grab a quick takeaway!
+                Conveniently located on Station Road, right in the heart of Chichli. Pop in for a refreshing cold coffee, a cheesy burger, or grab a quick takeaway!
               </p>
               
               <div className="space-y-4">
@@ -352,7 +353,7 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
                   <MapPin className="w-5 h-5 text-amber-700 shrink-0 mt-1" />
                   <div>
                     <h4 className="font-bold text-stone-800">Our Address</h4>
-                    <p className="text-sm text-stone-550 mt-1">Station Road, In Front of Comfort Hotel, Gadarwara, Madhya Pradesh, India</p>
+                    <p className="text-sm text-stone-550 mt-1">Station Road, In Front of Comfort Hotel, Chichli, Madhya Pradesh, India</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -367,7 +368,7 @@ export function HomeClient({ categories, bestSellers }: HomeClientProps) {
 
             <div className="w-full h-80 sm:h-96 rounded-2xl overflow-hidden border border-stone-200 shadow-md relative bg-stone-100">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3671.5!2d78.7844!3d22.9247!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDU1JzI5LjAiTiA3OMKwNDcnMDMuOCJF!5e0!3m2!1sen!2sin!4v1"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14691.564757342605!2d78.81050212724495!3d22.834241639144433!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397e59f8c6e2b9c7%3A0x8d5c5f4b4a3a3a3!2sChichli%2C%20Madhya%20Pradesh%20487551!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 

@@ -1,16 +1,16 @@
 export const siteConfig = {
   name: 'Swagatam Cafe',
   description:
-    'Premium food ordering platform — Cafe, Fast Food & Restaurant in Gadarwara, Madhya Pradesh. Order online for home delivery.',
+    'Premium food ordering platform — Cafe, Fast Food & Restaurant in Chichli, Madhya Pradesh. Order online for home delivery.',
   tagline: 'Where Every Bite Tells a Story',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   ogImage: '/images/og-image.jpg',
   phone: '+91 XXXXX XXXXX',
   email: 'hello@swagatamcafe.com',
-  address: 'Station Road, In Front of Comfort Hotel, Gadarwara, Madhya Pradesh, India',
+  address: 'Station Road, In Front of Comfort Hotel, Chichli, Madhya Pradesh, India',
   location: {
-    lat: 22.9247,
-    lng: 78.7844,
+    lat: 22.8398,
+    lng: 78.8200,
   },
   operatingHours: {
     open: '10:00',
@@ -26,17 +26,17 @@ export const siteConfig = {
     twitter: '#',
   },
   googleMapsEmbed:
-    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3671.5!2d78.7844!3d22.9247!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDU1JzI5LjAiTiA3OMKwNDcnMDMuOCJF!5e0!3m2!1sen!2sin!4v1',
+    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14691.564757342605!2d78.81050212724495!3d22.834241639144433!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397e59f8c6e2b9c7%3A0x8d5c5f4b4a3a3a3!2sChichli%2C%20Madhya%20Pradesh%20487551!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin',
   keywords: [
     'Swagatam Cafe',
-    'Gadarwara restaurant',
-    'food delivery Gadarwara',
+    'Chichli restaurant',
+    'food delivery Chichli',
     'cafe Madhya Pradesh',
     'online food order',
     'pizza delivery',
     'burger',
     'coffee shop',
-    'Station Road Gadarwara',
+    'Station Road Chichli',
   ],
 } as const;
 

@@ -238,7 +238,7 @@ export function DashboardClient() {
           <Card className="rounded-2xl border lg:col-span-2">
             <div className="p-5 border-b flex items-center justify-between">
               <h3 className="font-heading font-bold text-sm text-foreground">Weekly Revenue Trend</h3>
-              <Badge variant="outline" className="border-amber-500/30 text-amber-500 bg-amber-500/5">Gadarwara Sales</Badge>
+              <Badge variant="outline" className="border-amber-500/30 text-amber-500 bg-amber-500/5">Chichli Sales</Badge>
             </div>
             <CardContent className="p-5">
               <div className="h-72 w-full">

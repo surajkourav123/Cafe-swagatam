@@ -300,7 +300,7 @@ export function DeliveryClient() {
           <form onSubmit={handleSubmit} className="space-y-4 text-xs py-2">
             {/* Village / Area Name */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase">Village / Area Name (Gadarwara)</label>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase">Village / Area Name (Chichli)</label>
               <Input 
                 placeholder="e.g. Civil Lines" 
                 required

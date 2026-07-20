@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { connectDB } from './db';
 import Category from '@/models/category.model';
 import Product from '@/models/product.model';
@@ -10,6 +11,7 @@ import Coupon from '@/models/coupon.model';
 import DeliveryArea from '@/models/delivery-area.model';
 import User from '@/models/user.model';
 import Review from '@/models/review.model';
+import Admin from '@/models/admin.model';
 import { MENU_CATEGORIES } from '@/config/constants';
 
 const JSON_DB_PATH = path.join(process.cwd(), 'db.json');
@@ -302,7 +304,7 @@ function loadFileDB(): FileDatabase {
         operatingHours: { open: '11:00', close: '22:00', days: 'Monday to Sunday' },
         phone: '+91 91794 88390',
         email: 'hello@swagatamcafe.com',
-        address: 'Station Road, Gadarwara, Madhya Pradesh',
+        address: 'Station Road, Chichli, Madhya Pradesh',
       }
     };
     fs.writeFileSync(JSON_DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
@@ -323,11 +325,47 @@ function saveFileDB(db: FileDatabase) {
   fs.writeFileSync(JSON_DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
 }
 
+export async function seedDefaultAdmin() {
+  try {
+    const adminCount = await Admin.countDocuments();
+    if (adminCount === 0) {
+      const email = process.env.ADMIN_EMAIL || 'admin@swagatamcafe.com';
+      const password = process.env.ADMIN_PASSWORD || 'adminpassword';
+      const hashedPassword = await bcrypt.hash(password, 12);
+      
+      await Admin.create({
+        name: 'Swagatam Admin',
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        role: 'superadmin',
+      });
+      console.log('Seeded default admin in MongoDB');
+    }
+  } catch (error: any) {
+    console.error('Error seeding default admin:', error.message);
+  }
+}
+
 export async function checkDBConnected(): Promise<boolean> {
+  const isMDBAvailable = !!process.env.MONGODB_URI && 
+                         !process.env.MONGODB_URI.includes('<user>') && 
+                         !process.env.MONGODB_URI.includes('placeholder');
+  
   try {
     const conn = await connectDB();
-    return conn.connection.readyState === 1;
-  } catch {
+    if (conn.connection.readyState === 1) {
+      // Seed default admin in background
+      seedDefaultAdmin();
+      return true;
+    }
+    if (isMDBAvailable) {
+      throw new Error("MongoDB connection readyState is not 1");
+    }
+    return false;
+  } catch (error) {
+    if (isMDBAvailable) {
+      throw error;
+    }
     return false;
   }
 }

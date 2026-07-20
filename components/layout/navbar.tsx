@@ -75,7 +75,7 @@ export function Navbar() {
               {siteConfig.name}
             </span>
             <span className="block text-[10px] text-muted-foreground uppercase tracking-widest font-medium -mt-1">
-              Gadarwara
+              Chichli
             </span>
           </div>
         </Link>

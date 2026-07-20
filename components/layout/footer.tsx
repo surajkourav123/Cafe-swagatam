@@ -81,7 +81,7 @@ export function Footer() {
                 <div className="flex items-start gap-2.5">
                   <MapPin className="w-4.5 h-4.5 text-amber-700 shrink-0 mt-0.5" />
                   <span className="text-stone-550">
-                    Station Road, Gadarwara,<br />
+                    Station Road, Chichli,<br />
                     Madhya Pradesh, 487551
                   </span>
                 </div>
@@ -109,7 +109,7 @@ export function Footer() {
                   <span className="text-amber-700 font-medium">11:00 AM - 10:00 PM</span>
                 </p>
                 <p className="text-stone-400 text-[11px] leading-tight">
-                  Delivery available within Gadarwara city areas. Minimum order ₹0.
+                  Delivery available within Chichli city areas. Minimum order ₹0.
                 </p>
               </div>
             </div>
@@ -120,7 +120,7 @@ export function Footer() {
         {/* Google Maps embed and copyright */}
         <div className="border-t border-stone-200 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-stone-450">
-            &copy; {currentYear} Swagatam Cafe. All rights reserved. Made with ❤️ in Gadarwara.
+            &copy; {currentYear} Swagatam Cafe. All rights reserved. Made with ❤️ in Chichli.
           </p>
           <div className="text-xs text-stone-450 flex items-center space-x-4">
             <Link href="#" className="hover:text-stone-900 transition-colors">Privacy Policy</Link>

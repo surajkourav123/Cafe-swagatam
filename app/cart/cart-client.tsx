@@ -199,8 +199,8 @@ export function CartClient() {
             <Card className="rounded-2xl overflow-hidden border border-stone-200/80 shadow-sm bg-white">
               <CardContent className="p-6 divide-y divide-stone-100">
                 {items.map((item) => (
-                  <div key={item.product} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
-                    <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-100">
+                  <div key={item.product} className="flex items-center gap-3 sm:gap-4 py-4 first:pt-0 last:pb-0">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-stone-100">
                       <Image 
                         src={item.image} 
                         alt={item.name} 
@@ -294,7 +294,7 @@ export function CartClient() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Delivery Area Dropdown */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">Delivery Area (Gadarwara)</label>
+                    <label className="text-xs font-bold text-stone-500 uppercase">Delivery Area (Chichli)</label>
                     <select 
                       value={deliveryArea || ''}
                       onChange={(e) => setDeliveryAreaName(e.target.value || null)}

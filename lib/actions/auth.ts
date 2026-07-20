@@ -13,8 +13,10 @@ import {
 import { 
   dbGetUserByPhone, 
   dbCreateUser, 
-  dbGetUserById 
+  dbGetUserById,
+  checkDBConnected
 } from '@/lib/db-helper';
+import Admin from '@/models/admin.model';
 import type { LoginFormData, RegisterFormData, AdminLoginFormData } from '@/lib/validations';
 
 const COOKIE_NAME = 'swagatam-auth-token';
@@ -94,30 +96,57 @@ export async function loginAction(data: LoginFormData) {
 
 export async function adminLoginAction(data: AdminLoginFormData) {
   try {
-    // For admin, we support a predefined email and password,
-    // or we can verify in database if we have admin collections.
-    // Predefined admin credentials:
-    const ADMIN_EMAIL = 'admin@swagatamcafe.com';
-    const ADMIN_PASSWORD = 'adminpassword'; // Simple fallback for local dev
+    const isConnected = await checkDBConnected();
+    if (isConnected) {
+      const adminUser = await Admin.findOne({ email: data.email.toLowerCase() }).select('+password');
+      if (adminUser && adminUser.password) {
+        const isMatch = await verifyPassword(data.password, adminUser.password);
+        if (isMatch) {
+          const token = generateToken({
+            userId: adminUser._id.toString(),
+            role: 'admin',
+          });
 
-    if (data.email.toLowerCase() === ADMIN_EMAIL && data.password === ADMIN_PASSWORD) {
-      const token = generateToken({
-        userId: 'admin_user',
-        role: 'admin',
-      });
+          const cookieStore = await cookies();
+          cookieStore.set(COOKIE_NAME, token, getTokenCookieOptions());
 
-      const cookieStore = await cookies();
-      cookieStore.set(COOKIE_NAME, token, getTokenCookieOptions());
+          return {
+            success: true,
+            user: {
+              id: adminUser._id.toString(),
+              name: adminUser.name,
+              email: adminUser.email,
+              role: 'admin',
+            },
+          };
+        }
+      }
+    }
 
-      return {
-        success: true,
-        user: {
-          id: 'admin_user',
-          name: 'Swagatam Admin',
-          email: ADMIN_EMAIL,
+    // Fallback credentials for local dev / mock DB mode
+    if (!isConnected) {
+      const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@swagatamcafe.com';
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'adminpassword';
+
+      if (data.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && data.password === ADMIN_PASSWORD) {
+        const token = generateToken({
+          userId: 'admin_user',
           role: 'admin',
-        },
-      };
+        });
+
+        const cookieStore = await cookies();
+        cookieStore.set(COOKIE_NAME, token, getTokenCookieOptions());
+
+        return {
+          success: true,
+          user: {
+            id: 'admin_user',
+            name: 'Swagatam Admin',
+            email: ADMIN_EMAIL,
+            role: 'admin',
+          },
+        };
+      }
     }
 
     return { success: false, error: 'Invalid email or password' };
@@ -146,12 +175,25 @@ export async function getCurrentUserAction() {
     if (!payload) return null;
 
     if (payload.role === 'admin') {
-      return {
-        id: 'admin_user',
-        name: 'Swagatam Admin',
-        email: 'admin@swagatamcafe.com',
-        role: 'admin' as const,
-      };
+      if (payload.userId === 'admin_user') {
+        return {
+          id: 'admin_user',
+          name: 'Swagatam Admin',
+          email: process.env.ADMIN_EMAIL || 'admin@swagatamcafe.com',
+          role: 'admin' as const,
+        };
+      }
+
+      const adminUser = await Admin.findById(payload.userId);
+      if (adminUser) {
+        return {
+          id: adminUser._id.toString(),
+          name: adminUser.name,
+          email: adminUser.email,
+          role: 'admin' as const,
+        };
+      }
+      return null;
     }
 
     const user = await dbGetUserById(payload.userId);

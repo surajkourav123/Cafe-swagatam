@@ -238,11 +238,10 @@ export function MenuClient({ categories, products }: MenuClientProps) {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="group flex flex-col bg-white overflow-hidden transition-all duration-300"
+                    className="group flex flex-row sm:flex-col bg-white overflow-hidden rounded-2xl transition-all duration-300 gap-4 sm:gap-0 border-b border-stone-100/60 sm:border border-transparent sm:hover:border-stone-100 pb-4 sm:pb-0 sm:hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] sm:hover:-translate-y-1 sm:p-3"
                   >
-                    {/* Image Container - Aspect 4:3 */}
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-stone-100 rounded-2xl border border-stone-200/40">
+                    {/* Image Container - Square on mobile, 4:3 on desktop */}
+                    <div className="relative w-24 h-24 sm:w-full sm:aspect-[4/3] shrink-0 overflow-hidden bg-stone-100 rounded-2xl border border-stone-200/40">
                       <Image
                         src={product.image}
                         alt={product.name}
@@ -250,47 +249,49 @@ export function MenuClient({ categories, products }: MenuClientProps) {
                         className="object-cover group-hover:scale-102 transition-transform duration-700 ease-out"
                       />
                       {product.isBestSeller && (
-                        <span className="absolute top-3 right-3 bg-stone-950 text-white font-semibold text-[8px] px-2.5 py-1 rounded uppercase tracking-wider shadow-sm">
+                        <span className="absolute top-2 right-2 bg-stone-950 text-white font-semibold text-[7px] sm:text-[8px] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded uppercase tracking-wider shadow-sm">
                           Bestseller
                         </span>
                       )}
                     </div>
 
                     {/* Content underneath */}
-                    <div className="flex flex-col pt-4 pb-2">
-                      <div className="flex items-center gap-2 mb-1 text-xs">
-                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">
-                          {product.category && typeof product.category === 'object' ? product.category.name : 'Cafe'}
-                        </span>
-                        <span className="text-stone-300">•</span>
-                        {product.isVeg ? (
-                          <span className="text-[9px] font-bold text-green-600 tracking-wider uppercase">Veg</span>
-                        ) : (
-                          <span className="text-[9px] font-bold text-red-650 tracking-wider uppercase">Non-Veg</span>
-                        )}
+                    <div className="flex flex-col flex-1 justify-between sm:pt-4 sm:pb-2 min-w-0">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1 text-xs">
+                          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider truncate max-w-[80px] sm:max-w-none">
+                            {product.category && typeof product.category === 'object' ? product.category.name : 'Cafe'}
+                          </span>
+                          <span className="text-stone-300">•</span>
+                          {product.isVeg ? (
+                            <span className="text-[9px] font-bold text-green-600 tracking-wider uppercase">Veg</span>
+                          ) : (
+                            <span className="text-[9px] font-bold text-red-650 tracking-wider uppercase">Non-Veg</span>
+                          )}
+                        </div>
+
+                        <h3 className="font-heading text-base sm:text-lg font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
+                          {product.name}
+                        </h3>
+
+                        <p className="text-xs text-stone-500 mt-1 line-clamp-2 leading-relaxed sm:mt-1.5">
+                          {product.description}
+                        </p>
                       </div>
 
-                      <h3 className="font-heading text-lg font-bold text-stone-900 group-hover:text-amber-800 transition-colors">
-                        {product.name}
-                      </h3>
-
-                      <p className="text-xs text-stone-500 mt-1.5 line-clamp-2 leading-relaxed">
-                        {product.description}
-                      </p>
-
-                      <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center justify-between mt-3 sm:mt-4">
                         <div className="flex items-baseline gap-1.5">
-                          <span className="text-base font-bold text-stone-900">₹{product.price}</span>
+                          <span className="text-sm sm:text-base font-bold text-stone-900">₹{product.price}</span>
                           {product.originalPrice && (
-                            <span className="text-xs text-stone-400 line-through">₹{product.originalPrice}</span>
+                            <span className="text-[10px] sm:text-xs text-stone-400 line-through">₹{product.originalPrice}</span>
                           )}
                         </div>
                         
                         <Button 
                           onClick={() => addToCart(product)}
-                          className="rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs px-4 h-8 transition-colors cursor-pointer"
+                          className="rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-[10px] sm:text-xs px-3 sm:px-4 h-7.5 sm:h-8 transition-colors cursor-pointer"
                         >
-                          Add to Cart
+                          Add
                         </Button>
                       </div>
                     </div>
