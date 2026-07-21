@@ -8,7 +8,7 @@ import { CustomerLayout } from '@/components/layout/customer-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { loginAction, registerAction, resetPasswordAction } from '@/lib/actions/auth';
+import { loginAction, registerAction, resetPasswordAction, sendOtpAction, verifyOtpAction } from '@/lib/actions/auth';
 import { User, Phone, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,6 +29,10 @@ function LoginForms() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+
+  // OTP States
+  const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,15 +79,50 @@ function LoginForms() {
     }
 
     setLoading(true);
-    toast.loading('Creating account...', { id: 'auth' });
+    toast.loading('Sending verification code...', { id: 'auth' });
 
     try {
-      const res = await registerAction({ name, phone, email, password });
+      const res = await sendOtpAction(phone);
       if (res.success) {
+        toast.success(res.message, { id: 'auth' });
+        if (res.otp) {
+          toast.success(`Demo Verification OTP: ${res.otp}`, { id: 'auth-otp', duration: 15000 });
+        }
+        setShowOtpScreen(true);
+      } else {
+        toast.error(res.error || 'Failed to send verification code', { id: 'auth' });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send verification code', { id: 'auth' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpInput.match(/^\d{6}$/)) {
+      toast.error('Please enter a valid 6-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    toast.loading('Verifying code & creating account...', { id: 'auth' });
+
+    try {
+      const verifyRes = await verifyOtpAction(phone, otpInput);
+      if (!verifyRes.success) {
+        toast.error(verifyRes.error || 'Invalid OTP code', { id: 'auth' });
+        setLoading(false);
+        return;
+      }
+
+      const registerRes = await registerAction({ name, phone, email, password });
+      if (registerRes.success) {
         toast.success('Account created successfully!', { id: 'auth' });
         router.push(from);
       } else {
-        toast.error(res.error || 'Registration failed', { id: 'auth' });
+        toast.error(registerRes.error || 'Registration failed', { id: 'auth' });
       }
     } catch (err: any) {
       toast.error(err.message || 'Registration failed', { id: 'auth' });
@@ -245,77 +284,132 @@ function LoginForms() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
-                  onSubmit={handleRegister}
+                  onSubmit={showOtpScreen ? handleVerifyAndRegister : handleRegister}
                   className="space-y-4"
                 >
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">Full Name</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
-                      <Input 
-                        required
-                        placeholder="John Doe"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
-                      />
-                    </div>
-                  </div>
+                  {!showOtpScreen ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Full Name</label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            required
+                            placeholder="John Doe"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                          />
+                        </div>
+                      </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
-                      <Input 
-                        type="tel"
-                        required
-                        placeholder="10-digit mobile number"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
-                        maxLength={10}
-                      />
-                    </div>
-                  </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Phone Number</label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            type="tel"
+                            required
+                            placeholder="10-digit mobile number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                            maxLength={10}
+                          />
+                        </div>
+                      </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">Email (Optional)</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
-                      <Input 
-                        type="email"
-                        placeholder="john@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
-                      />
-                    </div>
-                  </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Email (Optional)</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            type="email"
+                            placeholder="john@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                          />
+                        </div>
+                      </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
-                      <Input 
-                        type="password"
-                        required
-                        placeholder="Min 6 characters"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
-                        minLength={6}
-                      />
-                    </div>
-                  </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Password</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            type="password"
+                            required
+                            placeholder="Min 6 characters"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                            minLength={6}
+                          />
+                        </div>
+                      </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full h-12 rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold mt-4 shadow group cursor-pointer"
-                  >
-                    {loading ? 'Creating Account...' : 'Create Account'}
-                    {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
-                  </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full h-12 rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold mt-4 shadow group cursor-pointer"
+                      >
+                        {loading ? 'Sending OTP...' : 'Send Verification OTP'}
+                        {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-xs text-amber-800 leading-relaxed text-center">
+                        We have sent a 6-digit OTP verification code to <span className="font-bold">{phone}</span>. Please enter it below to confirm your mobile number.
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Enter Verification OTP</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            type="text"
+                            required
+                            placeholder="6-digit OTP code"
+                            value={otpInput}
+                            onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 font-mono tracking-widest text-center text-lg text-stone-850"
+                            maxLength={6}
+                          />
+                        </div>
+                      </div>
+
+                      <Button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full h-12 rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold mt-4 shadow group cursor-pointer"
+                      >
+                        {loading ? 'Verifying...' : 'Verify & Create Account'}
+                        {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
+                      </Button>
+
+                      <div className="flex justify-between items-center pt-2">
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setShowOtpScreen(false);
+                            setOtpInput('');
+                          }} 
+                          className="text-xs text-stone-500 hover:underline cursor-pointer"
+                        >
+                          Change Number
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={handleRegister} 
+                          className="text-xs text-amber-700 hover:underline cursor-pointer font-bold"
+                        >
+                          Resend OTP
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </motion.form>
               )}
 

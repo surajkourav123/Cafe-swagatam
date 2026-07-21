@@ -37,32 +37,53 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Load initial state from localStorage only on client-side mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('swagatam-cart');
-    if (savedCart) {
-      try {
-        const parsed = JSON.parse(savedCart);
-        setItems(Array.isArray(parsed) ? parsed : []);
-      } catch {
-        localStorage.removeItem('swagatam-cart');
-      }
-    }
-
-    const savedArea = localStorage.getItem('swagatam-area');
-    if (savedArea) {
-      setDeliveryArea(savedArea);
-    }
-
-    const savedCoupon = localStorage.getItem('swagatam-coupon');
-    const savedDiscount = localStorage.getItem('swagatam-coupon-discount');
-    if (savedCoupon && savedDiscount) {
-      setCouponCode(savedCoupon);
-      setCouponDiscount(Number(savedDiscount));
-    }
-
     getDeliveryAreasAction().then(res => {
       if (res.success && res.deliveryAreas) {
         setDeliveryAreas(res.deliveryAreas);
       }
+    });
+
+    // Verify cart ownership on load to prevent items leakage between different logged-in users
+    import('@/lib/actions/auth').then(({ getCurrentUserAction }) => {
+      getCurrentUserAction().then(user => {
+        const currentOwner = user && user.role === 'customer' ? user.phone : 'guest';
+        const savedOwner = localStorage.getItem('swagatam-cart-owner') || 'guest';
+
+        if (user && savedOwner !== 'guest' && savedOwner !== currentOwner) {
+          localStorage.removeItem('swagatam-cart');
+          localStorage.removeItem('swagatam-area');
+          localStorage.removeItem('swagatam-coupon');
+          localStorage.removeItem('swagatam-coupon-discount');
+          setItems([]);
+          setDeliveryArea(null);
+          setCouponCode(null);
+          setCouponDiscount(0);
+        } else {
+          const savedCart = localStorage.getItem('swagatam-cart');
+          if (savedCart) {
+            try {
+              const parsed = JSON.parse(savedCart);
+              setItems(Array.isArray(parsed) ? parsed : []);
+            } catch {
+              localStorage.removeItem('swagatam-cart');
+            }
+          }
+
+          const savedArea = localStorage.getItem('swagatam-area');
+          if (savedArea) {
+            setDeliveryArea(savedArea);
+          }
+
+          const savedCoupon = localStorage.getItem('swagatam-coupon');
+          const savedDiscount = localStorage.getItem('swagatam-coupon-discount');
+          if (savedCoupon && savedDiscount) {
+            setCouponCode(savedCoupon);
+            setCouponDiscount(Number(savedDiscount));
+          }
+        }
+
+        localStorage.setItem('swagatam-cart-owner', currentOwner);
+      });
     });
   }, []);
 

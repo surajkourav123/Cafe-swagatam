@@ -53,10 +53,12 @@ export async function createOrderAction(data: CheckoutFormData, cartItems: any[]
 
     // Validate discount
     let discount = 0;
+    let couponDoc: any = null;
     if (couponCode) {
       const coupon = await getCouponByCode(couponCode);
       const subtotal = verifiedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
       if (coupon && subtotal >= coupon.minOrder) {
+        couponDoc = coupon;
         if (coupon.type === 'percentage') {
           discount = Math.round((subtotal * coupon.value) / 100);
           if (coupon.maxDiscount && discount > coupon.maxDiscount) {
@@ -80,7 +82,7 @@ export async function createOrderAction(data: CheckoutFormData, cartItems: any[]
         address: data.address,
         landmark: data.landmark,
       },
-      deliveryArea: area.village,
+      deliveryArea: area._id,
       paymentMethod: data.paymentMethod,
       paymentStatus: 'pending',
       subtotal: summary.subtotal,
@@ -88,7 +90,7 @@ export async function createOrderAction(data: CheckoutFormData, cartItems: any[]
       discount: summary.discount,
       tax: summary.tax,
       total: summary.total,
-      coupon: couponCode,
+      coupon: couponDoc ? couponDoc._id : undefined,
       notes: data.notes,
       estimatedDelivery: new Date(Date.now() + area.estimatedTime * 60 * 1000).toISOString(),
     };

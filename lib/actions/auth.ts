@@ -273,3 +273,74 @@ export async function resetPasswordAction(data: { phone: string; name: string; n
     return { success: false, error: error.message || 'Password reset failed' };
   }
 }
+
+export async function sendOtpAction(phone: string) {
+  try {
+    if (!phone.match(/^[6-9]\d{9}$/)) {
+      return { success: false, error: 'Please enter a valid 10-digit Indian phone number' };
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Create secure token (reuse token payload field for validation)
+    const otpToken = generateToken({
+      userId: phone,
+      role: otp as any,
+    });
+
+    const cookieStore = await cookies();
+    cookieStore.set('swagatam-otp-token', otpToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 5 * 60, // 5 minutes
+      path: '/',
+    });
+
+    // Send real SMS if Fast2SMS key is configured
+    let realSMSSent = false;
+    if (process.env.FAST2SMS_API_KEY) {
+      try {
+        const smsRes = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&variables_values=${otp}&route=otp&numbers=${phone}`);
+        const smsData = await smsRes.json();
+        if (smsData.return) {
+          realSMSSent = true;
+        }
+      } catch (err) {
+        console.error('Failed to send real SMS via Fast2SMS:', err);
+      }
+    }
+
+    return { 
+      success: true, 
+      otp: realSMSSent ? undefined : otp,
+      message: realSMSSent 
+        ? 'OTP sent successfully to your mobile number via SMS!' 
+        : 'Demo Mode: OTP sent! Please check the toast notification for your code.'
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to send OTP' };
+  }
+}
+
+export async function verifyOtpAction(phone: string, otpInput: string) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('swagatam-otp-token')?.value;
+    if (!token) {
+      return { success: false, error: 'OTP has expired. Please request a new one.' };
+    }
+
+    const payload = verifyToken(token);
+    if (!payload || payload.userId !== phone || payload.role !== otpInput) {
+      return { success: false, error: 'Invalid OTP code. Please try again.' };
+    }
+
+    // OTP is valid! Delete the cookie
+    cookieStore.delete('swagatam-otp-token');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'OTP verification failed' };
+  }
+}
