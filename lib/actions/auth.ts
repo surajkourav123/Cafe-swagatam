@@ -17,23 +17,30 @@ import {
   checkDBConnected
 } from '@/lib/db-helper';
 import Admin from '@/models/admin.model';
+import { loginSchema, registerSchema, adminLoginSchema } from '@/lib/validations';
 import type { LoginFormData, RegisterFormData, AdminLoginFormData } from '@/lib/validations';
 
 const COOKIE_NAME = 'swagatam-auth-token';
 
 export async function registerAction(data: RegisterFormData) {
   try {
-    const existingUser = await dbGetUserByPhone(data.phone);
+    const validated = registerSchema.safeParse(data);
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0].message };
+    }
+    const validatedData = validated.data;
+
+    const existingUser = await dbGetUserByPhone(validatedData.phone);
     if (existingUser) {
       return { success: false, error: 'Phone number already registered' };
     }
 
-    const hashedPassword = await hashPassword(data.password);
+    const hashedPassword = await hashPassword(validatedData.password);
     const user = await dbCreateUser({
-      name: data.name,
-      phone: data.phone,
+      name: validatedData.name,
+      phone: validatedData.phone,
       password: hashedPassword,
-      email: data.email,
+      email: validatedData.email,
     });
 
     const token = generateToken({
@@ -61,12 +68,18 @@ export async function registerAction(data: RegisterFormData) {
 
 export async function loginAction(data: LoginFormData) {
   try {
-    const user = await dbGetUserByPhone(data.phone);
+    const validated = loginSchema.safeParse(data);
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0].message };
+    }
+    const validatedData = validated.data;
+
+    const user = await dbGetUserByPhone(validatedData.phone);
     if (!user) {
       return { success: false, error: 'Invalid phone number or password' };
     }
 
-    const isMatch = await verifyPassword(data.password, user.password);
+    const isMatch = await verifyPassword(validatedData.password, user.password);
     if (!isMatch) {
       return { success: false, error: 'Invalid phone number or password' };
     }
@@ -96,11 +109,17 @@ export async function loginAction(data: LoginFormData) {
 
 export async function adminLoginAction(data: AdminLoginFormData) {
   try {
+    const validated = adminLoginSchema.safeParse(data);
+    if (!validated.success) {
+      return { success: false, error: validated.error.issues[0].message };
+    }
+    const validatedData = validated.data;
+
     const isConnected = await checkDBConnected();
     if (isConnected) {
-      const adminUser = await Admin.findOne({ email: data.email.toLowerCase() }).select('+password');
+      const adminUser = await Admin.findOne({ email: validatedData.email.toLowerCase() }).select('+password');
       if (adminUser && adminUser.password) {
-        const isMatch = await verifyPassword(data.password, adminUser.password);
+        const isMatch = await verifyPassword(validatedData.password, adminUser.password);
         if (isMatch) {
           const token = generateToken({
             userId: adminUser._id.toString(),
@@ -128,7 +147,7 @@ export async function adminLoginAction(data: AdminLoginFormData) {
       const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@swagatamcafe.com';
       const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'adminpassword';
 
-      if (data.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && data.password === ADMIN_PASSWORD) {
+      if (validatedData.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && validatedData.password === ADMIN_PASSWORD) {
         const token = generateToken({
           userId: 'admin_user',
           role: 'admin',
