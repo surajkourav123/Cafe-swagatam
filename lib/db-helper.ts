@@ -302,8 +302,8 @@ function loadFileDB(): FileDatabase {
         minOrderAmount: 0,
         taxRate: 5,
         operatingHours: { open: '11:00', close: '22:00', days: 'Monday to Sunday' },
-        phone: '+91 91794 88390',
-        email: 'hello@swagatamcafe.com',
+        phone: '+91 91746 50575',
+        email: 'swagatamcafeofficial@gmail.com',
         address: 'Station Road, Chichli, Madhya Pradesh',
       }
     };

@@ -5,8 +5,8 @@ export const siteConfig = {
   tagline: 'Where Every Bite Tells a Story',
   url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   ogImage: '/images/og-image.jpg',
-  phone: '+91 XXXXX XXXXX',
-  email: 'hello@swagatamcafe.com',
+  phone: '+91 91746 50575',
+  email: 'swagatamcafeofficial@gmail.com',
   address: 'Station Road, In Front of Comfort Hotel, Chichli, Madhya Pradesh, India',
   location: {
     lat: 22.8398,

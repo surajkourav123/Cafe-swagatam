@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ORDER_STATUSES, ORDER_TRACKING_STEPS } from '@/config/constants';
+import { siteConfig } from '@/config/site.config';
 import { 
   ClipboardCheck, 
   CreditCard, 
@@ -368,9 +369,9 @@ export function OrderClient({ orderId }: OrderClientProps) {
                 For corrections, cancellations, or questions, call us directly. Mention your order ID.
               </p>
               <Button asChild variant="outline" className="w-full rounded-xl border-stone-200 text-stone-700 hover:bg-stone-50 h-10 font-bold cursor-pointer">
-                <a href="tel:+919179488390" className="flex items-center justify-center gap-1.5">
+                <a href={`tel:${siteConfig.phone}`} className="flex items-center justify-center gap-1.5">
                   <Phone className="w-4 h-4 text-stone-500" />
-                  Call +91 91794 88390
+                  Call {siteConfig.phone}
                 </a>
               </Button>
             </Card>

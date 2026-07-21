@@ -392,15 +392,23 @@ export function CartClient() {
                 {paymentMethod === 'upi' && (
                   <div className="p-5 rounded-2xl bg-stone-50 border border-stone-200 space-y-4">
                     <div className="flex flex-col sm:flex-row items-center gap-6">
-                      {/* Placeholder QR */}
-                      <div className="w-32 h-32 bg-white rounded-xl p-2 shrink-0 flex items-center justify-center border border-stone-200">
-                        <QrCode className="w-28 h-28 text-stone-900" />
+                      {/* Paytm QR Scanner */}
+                      <div className="relative w-40 h-64 bg-white rounded-2xl p-1 shrink-0 flex items-center justify-center border border-stone-200 overflow-hidden shadow-sm">
+                        <Image 
+                          src="/images/paytm-qr.jpg" 
+                          alt="Paytm QR Scanner - Praveen Kumar Kourav" 
+                          fill
+                          className="object-contain"
+                        />
                       </div>
-                      <div className="space-y-2 text-center sm:text-left text-stone-650">
+                      <div className="space-y-2.5 text-center sm:text-left text-stone-650">
                         <h4 className="font-bold text-sm text-stone-900">Scan to Pay with Any UPI App</h4>
-                        <p className="text-xs text-stone-500">Scan this QR code using PhonePe, Google Pay, Paytm, or BHIM to pay the total amount.</p>
-                        <div className="inline-block bg-stone-200 px-3 py-1 rounded-lg text-xs font-semibold text-stone-800 mt-1">
-                          UPI ID: swagatamcafe@upi
+                        <p className="text-xs text-stone-500">Scan this QR code using Paytm, Google Pay, PhonePe, or BHIM to pay the total amount.</p>
+                        <div className="space-y-1.5 pt-1">
+                          <p className="text-xs font-medium text-stone-700">Account: <span className="font-bold text-stone-900">Praveen Kumar Kourav</span></p>
+                          <div className="inline-block bg-stone-100 border border-stone-200 px-3 py-1.5 rounded-xl text-xs font-bold text-stone-800 font-mono">
+                            UPI ID: paytm.s1z7dbt@pty
+                          </div>
                         </div>
                       </div>
                     </div>
