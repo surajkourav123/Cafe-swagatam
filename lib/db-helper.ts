@@ -358,14 +358,17 @@ export async function checkDBConnected(): Promise<boolean> {
       seedDefaultAdmin();
       return true;
     }
-    if (isMDBAvailable) {
+    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.CI === 'true';
+    if (isMDBAvailable && !isBuildPhase) {
       throw new Error("MongoDB connection readyState is not 1");
     }
     return false;
   } catch (error) {
-    if (isMDBAvailable) {
+    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.CI === 'true';
+    if (isMDBAvailable && !isBuildPhase) {
       throw error;
     }
+    console.warn('Database connection failed. Falling back to local mock database during build/CI.');
     return false;
   }
 }
@@ -376,8 +379,18 @@ export async function getCategories() {
   if (isConnected) {
     let list = await Category.find({ isActive: true }).sort({ sortOrder: 1 });
     if (list.length === 0) {
-      // Seed categories in MongoDB
-      await Category.insertMany(initialCategories);
+      // Seed categories in MongoDB using safe upsert to avoid build race conditions
+      for (const cat of initialCategories) {
+        try {
+          await Category.findOneAndUpdate(
+            { slug: cat.slug },
+            { $setOnInsert: cat },
+            { upsert: true }
+          );
+        } catch (err: any) {
+          if (!err.message.includes('E11000')) throw err;
+        }
+      }
       list = await Category.find({ isActive: true }).sort({ sortOrder: 1 });
     }
     return JSON.parse(JSON.stringify(list));
@@ -393,21 +406,42 @@ export async function getProducts(filters: { categorySlug?: string; search?: str
     // Make sure we have seeded products if empty
     const count = await Product.countDocuments();
     if (count === 0) {
-      const cats = await Category.find();
-      if (cats.length === 0) {
-        await Category.insertMany(initialCategories);
+      let allCats = await Category.find();
+      if (allCats.length === 0) {
+        for (const cat of initialCategories) {
+          try {
+            await Category.findOneAndUpdate(
+              { slug: cat.slug },
+              { $setOnInsert: cat },
+              { upsert: true }
+            );
+          } catch (err: any) {
+            if (!err.message.includes('E11000')) throw err;
+          }
+        }
+        allCats = await Category.find();
       }
-      const allCats = await Category.find();
-      const productsToInsert = initialProducts.map(p => {
+      
+      // Seed products safely using upsert to avoid duplicate key exceptions in concurrent workers
+      for (const p of initialProducts) {
         const cat = allCats.find(c => c.name === p.categoryName);
-        return {
+        const slug = p.name.toLowerCase().replace(/\s+/g, '-');
+        const prodDoc = {
           ...p,
-          slug: p.name.toLowerCase().replace(/\s+/g, '-'),
+          slug,
           category: cat?._id || allCats[0]._id,
           sortOrder: 0,
         };
-      });
-      await Product.insertMany(productsToInsert);
+        try {
+          await Product.findOneAndUpdate(
+            { slug },
+            { $setOnInsert: prodDoc },
+            { upsert: true }
+          );
+        } catch (err: any) {
+          if (!err.message.includes('E11000')) throw err;
+        }
+      }
     }
 
     const query: any = { isAvailable: true };
@@ -489,7 +523,17 @@ export async function getDeliveryAreas() {
   if (isConnected) {
     let list = await DeliveryArea.find({ isActive: true });
     if (list.length === 0) {
-      await DeliveryArea.insertMany(initialDeliveryAreas);
+      for (const da of initialDeliveryAreas) {
+        try {
+          await DeliveryArea.findOneAndUpdate(
+            { village: da.village },
+            { $setOnInsert: da },
+            { upsert: true }
+          );
+        } catch (err: any) {
+          if (!err.message.includes('E11000')) throw err;
+        }
+      }
       list = await DeliveryArea.find({ isActive: true });
     }
     return JSON.parse(JSON.stringify(list));
@@ -502,10 +546,20 @@ export async function getDeliveryAreas() {
 export async function getCouponByCode(code: string) {
   const isConnected = await checkDBConnected();
   if (isConnected) {
-    // Seed coupons if empty
+    // Seed coupons if empty safely to avoid build race conditions
     const count = await Coupon.countDocuments();
     if (count === 0) {
-      await Coupon.insertMany(initialCoupons);
+      for (const c of initialCoupons) {
+        try {
+          await Coupon.findOneAndUpdate(
+            { code: c.code },
+            { $setOnInsert: c },
+            { upsert: true }
+          );
+        } catch (err: any) {
+          if (!err.message.includes('E11000')) throw err;
+        }
+      }
     }
     const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true });
     return coupon ? JSON.parse(JSON.stringify(coupon)) : null;
