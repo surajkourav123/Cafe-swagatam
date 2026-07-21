@@ -262,7 +262,7 @@ interface FileDatabase {
   settings: any;
 }
 
-function loadFileDB(): FileDatabase {
+export function loadFileDB(): FileDatabase {
   if (!fs.existsSync(JSON_DB_PATH)) {
     // Generate initial db
     const catWithIds = initialCategories.map((c, i) => ({ ...c, _id: `cat_${i + 1}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
@@ -321,7 +321,7 @@ function loadFileDB(): FileDatabase {
   }
 }
 
-function saveFileDB(db: FileDatabase) {
+export function saveFileDB(db: FileDatabase) {
   fs.writeFileSync(JSON_DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
 }
 
@@ -571,10 +571,14 @@ export async function getCouponByCode(code: string) {
 }
 
 // User-related DB helpers
-export async function dbGetUserByPhone(phone: string) {
+export async function dbGetUserByPhone(phone: string, includePassword = false) {
   const isConnected = await checkDBConnected();
   if (isConnected) {
-    const user = await User.findOne({ phone });
+    const query = User.findOne({ phone });
+    if (includePassword) {
+      query.select('+password');
+    }
+    const user = await query;
     return user ? JSON.parse(JSON.stringify(user)) : null;
   } else {
     const db = loadFileDB();

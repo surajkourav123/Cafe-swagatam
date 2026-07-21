@@ -14,9 +14,12 @@ import {
   dbGetUserByPhone, 
   dbCreateUser, 
   dbGetUserById,
-  checkDBConnected
+  checkDBConnected,
+  loadFileDB,
+  saveFileDB
 } from '@/lib/db-helper';
 import Admin from '@/models/admin.model';
+import User from '@/models/user.model';
 import { loginSchema, registerSchema, adminLoginSchema } from '@/lib/validations';
 import type { LoginFormData, RegisterFormData, AdminLoginFormData } from '@/lib/validations';
 
@@ -74,7 +77,7 @@ export async function loginAction(data: LoginFormData) {
     }
     const validatedData = validated.data;
 
-    const user = await dbGetUserByPhone(validatedData.phone);
+    const user = await dbGetUserByPhone(validatedData.phone, true);
     if (!user) {
       return { success: false, error: 'Invalid phone number or password' };
     }
@@ -228,5 +231,45 @@ export async function getCurrentUserAction() {
     };
   } catch {
     return null;
+  }
+}
+
+export async function resetPasswordAction(data: { phone: string; name: string; newPassword: string }) {
+  try {
+    if (!data.phone.match(/^[6-9]\d{9}$/)) {
+      return { success: false, error: 'Please enter a valid 10-digit Indian phone number' };
+    }
+    if (!data.name.trim()) {
+      return { success: false, error: 'Please enter your registered full name' };
+    }
+    if (data.newPassword.length < 6) {
+      return { success: false, error: 'New password must be at least 6 characters' };
+    }
+
+    const user = await dbGetUserByPhone(data.phone);
+    if (!user) {
+      return { success: false, error: 'No user registered with this phone number' };
+    }
+
+    if (user.name.toLowerCase().trim() !== data.name.toLowerCase().trim()) {
+      return { success: false, error: 'Name does not match our records' };
+    }
+
+    const hashedPassword = await hashPassword(data.newPassword);
+    const isConnected = await checkDBConnected();
+    if (isConnected) {
+      await User.findByIdAndUpdate(user._id || user.id, { password: hashedPassword });
+    } else {
+      const db = loadFileDB();
+      const dbUserIdx = db.users.findIndex(u => u.phone === data.phone);
+      if (dbUserIdx !== -1) {
+        db.users[dbUserIdx].password = hashedPassword;
+        saveFileDB(db);
+      }
+    }
+
+    return { success: true, message: 'Password reset successfully. You can now login!' };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Password reset failed' };
   }
 }

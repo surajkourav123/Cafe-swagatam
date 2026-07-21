@@ -8,7 +8,7 @@ import { CustomerLayout } from '@/components/layout/customer-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { loginAction, registerAction } from '@/lib/actions/auth';
+import { loginAction, registerAction, resetPasswordAction } from '@/lib/actions/auth';
 import { User, Phone, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +20,7 @@ function LoginForms() {
   const paramMode = searchParams.get('mode');
   const initialMode = paramMode === 'register' ? 'register' : 'login';
 
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>(initialMode);
   const [loading, setLoading] = useState(false);
 
   // Form states
@@ -28,6 +28,7 @@ function LoginForms() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +92,41 @@ function LoginForms() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phone.match(/^[6-9]\d{9}$/)) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    if (!name.trim()) {
+      toast.error('Please enter your registered full name');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+    toast.loading('Resetting password...', { id: 'auth' });
+
+    try {
+      const res = await resetPasswordAction({ phone, name, newPassword });
+      if (res.success) {
+        toast.success(res.message || 'Password reset successfully!', { id: 'auth' });
+        setMode('login');
+        setPassword('');
+        setNewPassword('');
+      } else {
+        toast.error(res.error || 'Reset failed', { id: 'auth' });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Reset failed', { id: 'auth' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 relative overflow-hidden">
       {/* Background elements */}
@@ -104,12 +140,18 @@ function LoginForms() {
             <User className="w-8 h-8" />
           </div>
           <h1 className="font-heading text-3xl font-bold tracking-tight">
-            {mode === 'login' ? 'Welcome Back' : 'Create an Account'}
+            {mode === 'login' 
+              ? 'Welcome Back' 
+              : mode === 'register' 
+              ? 'Create an Account' 
+              : 'Reset Password'}
           </h1>
           <p className="text-muted-foreground text-sm mt-2">
             {mode === 'login' 
               ? 'Sign in to access your orders and saved addresses' 
-              : 'Join Swagatam Cafe for faster checkout and exclusive offers'}
+              : mode === 'register'
+              ? 'Join Swagatam Cafe for faster checkout and exclusive offers'
+              : 'Verify your name and phone number to reset your password'}
           </p>
         </div>
 
@@ -170,7 +212,7 @@ function LoginForms() {
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-stone-500 uppercase">Password</label>
-                      <button type="button" className="text-xs text-amber-700 hover:underline cursor-pointer">Forgot?</button>
+                      <button type="button" onClick={() => setMode('forgot')} className="text-xs text-amber-700 hover:underline cursor-pointer">Forgot?</button>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
@@ -274,6 +316,83 @@ function LoginForms() {
                     {loading ? 'Creating Account...' : 'Create Account'}
                     {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
                   </Button>
+                </motion.form>
+              )}
+
+              {mode === 'forgot' && (
+                <motion.form
+                  key="forgot"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  onSubmit={handleResetPassword}
+                  className="space-y-4"
+                >
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-stone-500 uppercase">Registered Phone Number</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                      <Input 
+                        type="tel"
+                        required
+                        placeholder="10-digit mobile number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                        maxLength={10}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-stone-500 uppercase">Registered Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                      <Input 
+                        required
+                        placeholder="e.g. John Doe (must match registration)"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-stone-500 uppercase">New Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                      <Input 
+                        type="password"
+                        required
+                        placeholder="Min 6 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                        minLength={6}
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-12 rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold mt-4 shadow group cursor-pointer"
+                  >
+                    {loading ? 'Resetting...' : 'Reset Password'}
+                    {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
+                  </Button>
+
+                  <div className="text-center pt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setMode('login')} 
+                      className="text-xs text-amber-700 hover:underline cursor-pointer font-bold"
+                    >
+                      Back to Sign In
+                    </button>
+                  </div>
                 </motion.form>
               )}
 
