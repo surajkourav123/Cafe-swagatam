@@ -32,6 +32,7 @@ function LoginForms() {
 
   // OTP States
   const [showOtpScreen, setShowOtpScreen] = useState(false);
+  const [showResetOtpScreen, setShowResetOtpScreen] = useState(false);
   const [otpInput, setOtpInput] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -73,21 +74,22 @@ function LoginForms() {
       toast.error('Please enter a valid 10-digit phone number');
       return;
     }
+    if (!email.trim() || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
-    toast.loading('Sending verification code...', { id: 'auth' });
+    toast.loading('Sending verification code to your email address...', { id: 'auth' });
 
     try {
-      const res = await sendOtpAction(phone);
+      const res = await sendOtpAction(phone, email);
       if (res.success) {
         toast.success(res.message, { id: 'auth' });
-        if (res.otp) {
-          toast.success(`Demo Verification OTP: ${res.otp}`, { id: 'auth-otp', duration: 15000 });
-        }
         setShowOtpScreen(true);
       } else {
         toast.error(res.error || 'Failed to send verification code', { id: 'auth' });
@@ -131,10 +133,39 @@ function LoginForms() {
     }
   };
 
+  const handleSendResetOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phone.match(/^[6-9]\d{9}$/)) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setLoading(true);
+    toast.loading('Sending verification code...', { id: 'auth' });
+
+    try {
+      const res = await sendOtpAction(phone);
+      if (res.success) {
+        toast.success(res.message, { id: 'auth' });
+        setShowResetOtpScreen(true);
+      } else {
+        toast.error(res.error || 'Failed to send verification code', { id: 'auth' });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send verification code', { id: 'auth' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone.match(/^[6-9]\d{9}$/)) {
       toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+    if (!otpInput.match(/^\d{6}$/)) {
+      toast.error('Please enter a valid 6-digit OTP');
       return;
     }
     if (!name.trim()) {
@@ -150,12 +181,15 @@ function LoginForms() {
     toast.loading('Resetting password...', { id: 'auth' });
 
     try {
-      const res = await resetPasswordAction({ phone, name, newPassword });
+      const res = await resetPasswordAction({ phone, otp: otpInput, name, newPassword });
       if (res.success) {
         toast.success(res.message || 'Password reset successfully!', { id: 'auth' });
         setMode('login');
+        setPhone('');
         setPassword('');
         setNewPassword('');
+        setOtpInput('');
+        setShowResetOtpScreen(false);
       } else {
         toast.error(res.error || 'Reset failed', { id: 'auth' });
       }
@@ -320,11 +354,12 @@ function LoginForms() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-stone-500 uppercase">Email (Optional)</label>
+                        <label className="text-xs font-bold text-stone-500 uppercase">Email Address</label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
                           <Input 
                             type="email"
+                            required
                             placeholder="john@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -361,7 +396,7 @@ function LoginForms() {
                   ) : (
                     <>
                       <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-xs text-amber-800 leading-relaxed text-center">
-                        We have sent a 6-digit OTP verification code to <span className="font-bold">{phone}</span>. Please enter it below to confirm your mobile number.
+                        We have sent a 6-digit OTP verification code to your email <span className="font-bold">{email}</span>. Please enter it below to confirm your email address.
                       </div>
 
                       <div className="space-y-1.5">
@@ -398,7 +433,7 @@ function LoginForms() {
                           }} 
                           className="text-xs text-stone-500 hover:underline cursor-pointer"
                         >
-                          Change Number
+                          Change Details
                         </button>
                         <button 
                           type="button" 
@@ -420,68 +455,127 @@ function LoginForms() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
-                  onSubmit={handleResetPassword}
+                  onSubmit={showResetOtpScreen ? handleResetPassword : handleSendResetOtp}
                   className="space-y-4"
                 >
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">Registered Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
-                      <Input 
-                        type="tel"
-                        required
-                        placeholder="10-digit mobile number"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
-                        maxLength={10}
-                      />
-                    </div>
-                  </div>
+                  {!showResetOtpScreen ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Registered Phone Number</label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            type="tel"
+                            required
+                            placeholder="10-digit mobile number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                            maxLength={10}
+                          />
+                        </div>
+                      </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">Registered Full Name</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
-                      <Input 
-                        required
-                        placeholder="e.g. John Doe (must match registration)"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
-                      />
-                    </div>
-                  </div>
+                      <Button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full h-12 rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold mt-4 shadow group cursor-pointer"
+                      >
+                        {loading ? 'Sending OTP...' : 'Send Reset OTP'}
+                        {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 text-xs text-amber-800 leading-relaxed text-center">
+                        We have sent an OTP reset code to your registered email address. Enter the code and your details below to reset your password.
+                      </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-stone-500 uppercase">New Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
-                      <Input 
-                        type="password"
-                        required
-                        placeholder="Min 6 characters"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
-                        minLength={6}
-                      />
-                    </div>
-                  </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Enter Verification OTP</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            type="text"
+                            required
+                            placeholder="6-digit OTP code"
+                            value={otpInput}
+                            onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 font-mono tracking-widest text-center text-lg text-stone-850"
+                            maxLength={6}
+                          />
+                        </div>
+                      </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full h-12 rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold mt-4 shadow group cursor-pointer"
-                  >
-                    {loading ? 'Resetting...' : 'Reset Password'}
-                    {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
-                  </Button>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">Registered Full Name</label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            required
+                            placeholder="e.g. John Doe (must match registration)"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-500 uppercase">New Password</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-stone-400" />
+                          <Input 
+                            type="password"
+                            required
+                            placeholder="Min 6 characters"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="pl-10 h-12 rounded-xl bg-stone-50/50 border-stone-200 focus-visible:ring-stone-950 text-stone-850"
+                            minLength={6}
+                          />
+                        </div>
+                      </div>
+
+                      <Button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full h-12 rounded-xl bg-stone-900 hover:bg-stone-850 text-white font-bold mt-4 shadow group cursor-pointer"
+                      >
+                        {loading ? 'Resetting...' : 'Verify & Reset Password'}
+                        {!loading && <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />}
+                      </Button>
+
+                      <div className="flex justify-between items-center pt-2">
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setShowResetOtpScreen(false);
+                            setOtpInput('');
+                          }} 
+                          className="text-xs text-stone-500 hover:underline cursor-pointer"
+                        >
+                          Change Number
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={handleSendResetOtp} 
+                          className="text-xs text-amber-700 hover:underline cursor-pointer font-bold"
+                        >
+                          Resend OTP
+                        </button>
+                      </div>
+                    </>
+                  )}
 
                   <div className="text-center pt-2">
                     <button 
                       type="button" 
-                      onClick={() => setMode('login')} 
+                      onClick={() => {
+                        setMode('login');
+                        setShowResetOtpScreen(false);
+                        setOtpInput('');
+                      }} 
                       className="text-xs text-amber-700 hover:underline cursor-pointer font-bold"
                     >
                       Back to Sign In

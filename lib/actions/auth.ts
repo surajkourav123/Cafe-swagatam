@@ -22,6 +22,7 @@ import Admin from '@/models/admin.model';
 import User from '@/models/user.model';
 import { loginSchema, registerSchema, adminLoginSchema } from '@/lib/validations';
 import type { LoginFormData, RegisterFormData, AdminLoginFormData } from '@/lib/validations';
+import { sendEmail } from '@/lib/email';
 
 const COOKIE_NAME = 'swagatam-auth-token';
 
@@ -234,16 +235,25 @@ export async function getCurrentUserAction() {
   }
 }
 
-export async function resetPasswordAction(data: { phone: string; name: string; newPassword: string }) {
+export async function resetPasswordAction(data: { phone: string; otp: string; name: string; newPassword: string }) {
   try {
     if (!data.phone.match(/^[6-9]\d{9}$/)) {
       return { success: false, error: 'Please enter a valid 10-digit Indian phone number' };
+    }
+    if (!data.otp.match(/^\d{6}$/)) {
+      return { success: false, error: 'Please enter a valid 6-digit OTP' };
     }
     if (!data.name.trim()) {
       return { success: false, error: 'Please enter your registered full name' };
     }
     if (data.newPassword.length < 6) {
       return { success: false, error: 'New password must be at least 6 characters' };
+    }
+
+    // Verify OTP first
+    const verifyRes = await verifyOtpAction(data.phone, data.otp);
+    if (!verifyRes.success) {
+      return { success: false, error: verifyRes.error || 'Invalid OTP code' };
     }
 
     const user = await dbGetUserByPhone(data.phone);
@@ -274,10 +284,23 @@ export async function resetPasswordAction(data: { phone: string; name: string; n
   }
 }
 
-export async function sendOtpAction(phone: string) {
+export async function sendOtpAction(phone: string, email?: string) {
   try {
     if (!phone.match(/^[6-9]\d{9}$/)) {
       return { success: false, error: 'Please enter a valid 10-digit Indian phone number' };
+    }
+
+    // Resolve email destination
+    let emailTo = email;
+    if (!emailTo) {
+      const user = await dbGetUserByPhone(phone);
+      if (user && user.email) {
+        emailTo = user.email;
+      }
+    }
+
+    if (!emailTo) {
+      return { success: false, error: 'Email address is required for verification code routing.' };
     }
 
     // Generate 6-digit OTP
@@ -298,26 +321,30 @@ export async function sendOtpAction(phone: string) {
       path: '/',
     });
 
-    // Send real SMS if Fast2SMS key is configured
-    let realSMSSent = false;
-    if (process.env.FAST2SMS_API_KEY) {
-      try {
-        const smsRes = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&variables_values=${otp}&route=otp&numbers=${phone}`);
-        const smsData = await smsRes.json();
-        if (smsData.return) {
-          realSMSSent = true;
-        }
-      } catch (err) {
-        console.error('Failed to send real SMS via Fast2SMS:', err);
-      }
+    // Send Email via SMTP
+    try {
+      await sendEmail({
+        to: emailTo,
+        subject: 'Your Swagatam Cafe Verification OTP Code',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px; max-width: 500px; margin: 0 auto; color: #333;">
+            <h2 style="color: #d97706; text-align: center; margin-bottom: 24px;">Swagatam Cafe</h2>
+            <p>Hello,</p>
+            <p>Use the following 6-digit OTP code to verify your email registration or reset your password:</p>
+            <div style="background-color: #fef3c7; border: 1px dashed #d97706; padding: 16px; border-radius: 8px; text-align: center; margin: 24px 0; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #b45309;">
+              ${otp}
+            </div>
+            <p style="font-size: 12px; color: #666; margin-top: 24px; text-align: center;">This code is valid for 5 minutes. If you did not request this, please ignore this email.</p>
+          </div>
+        `,
+      });
+    } catch (err: any) {
+      return { success: false, error: 'Email delivery failed: ' + err.message };
     }
 
     return { 
       success: true, 
-      otp: realSMSSent ? undefined : otp,
-      message: realSMSSent 
-        ? 'OTP sent successfully to your mobile number via SMS!' 
-        : 'Demo Mode: OTP sent! Please check the toast notification for your code.'
+      message: 'Verification OTP sent successfully to your Email Address!'
     };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to send OTP' };
