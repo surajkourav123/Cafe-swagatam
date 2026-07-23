@@ -15,6 +15,7 @@ import {
 import { getCurrentUserAction } from './auth';
 import type { CheckoutFormData } from '@/lib/validations';
 import { calculateCartSummary } from '@/utils/calculate-cart';
+import { sendEmail } from '@/lib/email';
 
 export async function createOrderAction(data: CheckoutFormData, cartItems: any[], couponCode?: string) {
   try {
@@ -96,6 +97,58 @@ export async function createOrderAction(data: CheckoutFormData, cartItems: any[]
     };
 
     const order = await dbCreateOrder(orderData);
+
+    // Send email notification to Admin asynchronously (so order placement doesn't wait/block)
+    try {
+      const adminEmail = process.env.SMTP_USER;
+      if (adminEmail) {
+        const itemsListHtml = verifiedItems.map(item => `
+          <li>
+            <strong>${item.name}</strong> x ${item.quantity} - ₹${item.price * item.quantity}
+          </li>
+        `).join('');
+
+        sendEmail({
+          to: adminEmail,
+          subject: `🚨 New Order Received! Order #${order.orderId}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #333;">
+              <h2 style="color: #d97706; border-bottom: 2px solid #fef3c7; padding-bottom: 12px;">New Order Alert!</h2>
+              <p>A new order has been placed on Swagatam Cafe website.</p>
+              
+              <div style="background-color: #fef3c7; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #b45309;">Order Details</h3>
+                <p><strong>Order ID:</strong> #${order.orderId}</p>
+                <p><strong>Customer Name:</strong> ${data.name}</p>
+                <p><strong>Phone:</strong> <a href="tel:${data.phone}">${data.phone}</a></p>
+                <p><strong>Payment Method:</strong> ${data.paymentMethod.toUpperCase()}</p>
+                <p><strong>Delivery Location:</strong> ${data.village}</p>
+                <p><strong>Address:</strong> ${data.address} ${data.landmark ? `(Landmark: ${data.landmark})` : ''}</p>
+                ${data.notes ? `<p><strong>Order Notes:</strong> ${data.notes}</p>` : ''}
+              </div>
+
+              <h3 style="color: #d97706;">Items Ordered</h3>
+              <ul style="padding-left: 20px;">
+                ${itemsListHtml}
+              </ul>
+
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+              <p style="font-size: 16px; font-weight: bold; text-align: right;">Total Amount: ₹${summary.total}</p>
+              
+              <div style="text-align: center; margin-top: 30px;">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://swagatamcafe-1amu.vercel.app'}/admin/orders" 
+                   style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                  View in Admin Panel
+                </a>
+              </div>
+            </div>
+          `
+        }).catch(err => console.error('Admin order notification email failed:', err));
+      }
+    } catch (err) {
+      console.error('Failed to prepare admin order notification email:', err);
+    }
+
     return { success: true, orderId: order.orderId, id: order._id };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to place order' };

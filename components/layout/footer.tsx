@@ -119,9 +119,14 @@ export function Footer() {
 
         {/* Google Maps embed and copyright */}
         <div className="border-t border-stone-200 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-stone-450">
-            &copy; {currentYear} Swagatam Cafe. All rights reserved. Made with ❤️ in Chichli.
-          </p>
+          <div className="flex flex-col space-y-1">
+            <p className="text-xs text-stone-450">
+              &copy; {currentYear} Swagatam Cafe. All rights reserved. Made with ❤️ in Chichli.
+            </p>
+            <p className="text-xs text-stone-400">
+              Created by <span className="font-semibold text-stone-500">DEEPESH THEKEDAR & SURAJ</span> (Dev Contact: <a href="tel:6263456470" className="hover:text-amber-700 underline">6263456470</a>)
+            </p>
+          </div>
           <div className="text-xs text-stone-450 flex items-center space-x-4">
             <Link href="#" className="hover:text-stone-900 transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-stone-900 transition-colors">Terms of Service</Link>
