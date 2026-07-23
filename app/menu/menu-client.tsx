@@ -238,7 +238,11 @@ export function MenuClient({ categories, products }: MenuClientProps) {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="group flex flex-row sm:flex-col bg-white overflow-hidden rounded-2xl transition-all duration-300 gap-4 sm:gap-0 border-b border-stone-100/60 sm:border border-transparent sm:hover:border-stone-100 pb-4 sm:pb-0 sm:hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] sm:hover:-translate-y-1 sm:p-3"
+                    className={`group flex flex-row sm:flex-col bg-white overflow-hidden rounded-2xl transition-all duration-300 gap-4 sm:gap-0 border-b border-stone-100/60 sm:border border-transparent pb-4 sm:pb-0 sm:p-3 ${
+                      product.isAvailable 
+                        ? 'sm:hover:border-stone-100 sm:hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] sm:hover:-translate-y-1' 
+                        : 'opacity-60 bg-stone-50/40'
+                    }`}
                   >
                     {/* Image Container - Square on mobile, 4:3 on desktop */}
                     <div className="relative w-24 h-24 sm:w-full sm:aspect-[4/3] shrink-0 overflow-hidden bg-stone-100 rounded-2xl border border-stone-200/40">
@@ -248,10 +252,17 @@ export function MenuClient({ categories, products }: MenuClientProps) {
                         fill
                         className="object-cover group-hover:scale-102 transition-transform duration-700 ease-out"
                       />
-                      {product.isBestSeller && (
+                      {product.isBestSeller && product.isAvailable && (
                         <span className="absolute top-2 right-2 bg-stone-950 text-white font-semibold text-[7px] sm:text-[8px] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded uppercase tracking-wider shadow-sm">
                           Bestseller
                         </span>
+                      )}
+                      {!product.isAvailable && (
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+                          <span className="bg-red-650 text-white font-extrabold text-[8px] sm:text-[9px] px-2 py-1 rounded uppercase tracking-wider shadow-md">
+                            Sold Out
+                          </span>
+                        </div>
                       )}
                     </div>
 
@@ -288,10 +299,15 @@ export function MenuClient({ categories, products }: MenuClientProps) {
                         </div>
                         
                         <Button 
-                          onClick={() => addToCart(product)}
-                          className="rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-[10px] sm:text-xs px-3 sm:px-4 h-7.5 sm:h-8 transition-colors cursor-pointer"
+                          onClick={() => product.isAvailable && addToCart(product)}
+                          disabled={!product.isAvailable}
+                          className={`rounded-full font-medium text-[10px] sm:text-xs px-3 sm:px-4 h-7.5 sm:h-8 transition-colors cursor-pointer ${
+                            product.isAvailable 
+                              ? 'bg-stone-900 hover:bg-stone-800 text-white' 
+                              : 'bg-stone-200 text-stone-400 border border-stone-300/40 cursor-not-allowed'
+                          }`}
                         >
-                          Add
+                          {product.isAvailable ? 'Add' : 'Sold Out'}
                         </Button>
                       </div>
                     </div>
