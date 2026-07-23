@@ -35,7 +35,7 @@ const addressSubSchema = new Schema({
 const UserSchema = new Schema<IUserDocument>({
   name: { type: String, required: true, trim: true, maxlength: 100 },
   phone: { type: String, required: true, unique: true, match: /^[6-9]\d{9}$/ },
-  email: { type: String, sparse: true, lowercase: true, trim: true },
+  email: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6, select: false },
   role: { type: String, enum: ['customer'], default: 'customer' },
   favorites: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
@@ -44,7 +44,7 @@ const UserSchema = new Schema<IUserDocument>({
 }, { timestamps: true });
 
 UserSchema.index({ phone: 1 }, { unique: true });
-UserSchema.index({ email: 1 }, { sparse: true });
+UserSchema.index({ email: 1 }, { unique: true, sparse: true });
 UserSchema.index({ createdAt: -1 });
 
 const User: Model<IUserDocument> = mongoose.models.User || mongoose.model<IUserDocument>('User', UserSchema);

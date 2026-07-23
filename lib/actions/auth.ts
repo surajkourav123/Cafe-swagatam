@@ -39,6 +39,21 @@ export async function registerAction(data: RegisterFormData) {
       return { success: false, error: 'Phone number already registered' };
     }
 
+    // Check if email is already registered
+    const isConnected = await checkDBConnected();
+    if (isConnected) {
+      const existingEmail = await User.findOne({ email: validatedData.email.toLowerCase().trim() });
+      if (existingEmail) {
+        return { success: false, error: 'Email address already registered' };
+      }
+    } else {
+      const db = loadFileDB();
+      const existingEmail = db.users.find(u => u.email?.toLowerCase().trim() === validatedData.email.toLowerCase().trim());
+      if (existingEmail) {
+        return { success: false, error: 'Email address already registered' };
+      }
+    }
+
     const hashedPassword = await hashPassword(validatedData.password);
     const user = await dbCreateUser({
       name: validatedData.name,
@@ -292,7 +307,30 @@ export async function sendOtpAction(phone: string, email?: string) {
 
     // Resolve email destination
     let emailTo = email;
-    if (!emailTo) {
+    if (emailTo) {
+      // Signup Flow: Check if phone is already registered
+      const existingUser = await dbGetUserByPhone(phone);
+      if (existingUser) {
+        return { success: false, error: 'Phone number already registered' };
+      }
+
+      // Signup Flow: Check if email is already registered
+      const isConnected = await checkDBConnected();
+      const searchEmail = emailTo.toLowerCase().trim();
+      if (isConnected) {
+        const existingEmail = await User.findOne({ email: searchEmail });
+        if (existingEmail) {
+          return { success: false, error: 'Email address already registered' };
+        }
+      } else {
+        const db = loadFileDB();
+        const existingEmail = db.users.find(u => u.email?.toLowerCase().trim() === searchEmail);
+        if (existingEmail) {
+          return { success: false, error: 'Email address already registered' };
+        }
+      }
+    } else {
+      // Forgot Password Flow: Resolve email destination
       const user = await dbGetUserByPhone(phone);
       if (user && user.email) {
         emailTo = user.email;
